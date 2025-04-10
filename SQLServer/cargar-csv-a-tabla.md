@@ -16,8 +16,7 @@ RECONFIGURE;
 EXEC sp_configure 'Ad Hoc Distributed Queries', 1;
 RECONFIGURE;
 
-> [!NOTE]
-> Esta tabla que veras a continuaciòn es un ejemplo, la cantidad de columnas depende de la necesidad.
+> **ℹ️ Nota:** Esta tabla que veras a continuaciòn es un ejemplo, la cantidad de columnas depende de la necesidad.
 
 -- Crea una tabla simple con una sola columna para almacenar los datos importados
 CREATE TABLE dbo.Radicados (
@@ -28,6 +27,8 @@ CREATE TABLE dbo.Radicados (
 SELECT physical_name
 FROM sys.master_files
 WHERE database_id = DB_ID();
+
+> **⚠️ Advertencia:** El archivo de prueba contiene una Hoja y una columna la cual se llama Radicado.
 
 -- Carga el archivo CSV a la tabla utilizando BULK INSERT
 BULK INSERT dbo.Radicados
