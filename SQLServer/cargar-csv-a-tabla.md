@@ -16,7 +16,7 @@ RECONFIGURE;
 EXEC sp_configure 'Ad Hoc Distributed Queries', 1;
 RECONFIGURE;
 
-[!NOTE]
+>[!NOTE]
 Esta tabla que veras a continuaciòn es un ejemplo, la cantidad de columnas depende de la necesidad.
 
 -- Crea una tabla simple con una sola columna para almacenar los datos importados
