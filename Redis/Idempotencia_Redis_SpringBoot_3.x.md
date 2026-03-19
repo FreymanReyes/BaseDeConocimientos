@@ -1,4 +1,4 @@
-🚀 Guía de Implementación: Idempotencia con Redis en Spring Boot 3.xEste documento detalla la arquitectura y configuración necesaria para evitar transacciones duplicadas en el microservicio de Bank Dugongo utilizando Redis como capa de caché de corta duración.
+# 🚀 Guía de Implementación: Idempotencia con Redis en Spring Boot 3.xEste documento detalla la arquitectura y configuración necesaria para evitar transacciones duplicadas en el microservicio de Bank Dugongo utilizando Redis como capa de caché de corta duración.
 
 ## 🛠️ 1. Infraestructura: Configuración con Docker
 
@@ -12,12 +12,40 @@ docker run --name redis-dugongo -p 6379:6379 -d redis:alpine
 
 Acceso al contenedor: docker exec -it redis-dugongo redis-cli
 
-Acción,Comando,Respuesta Esperada
-🔍 Ver todas las llaves,keys *,Lista de llaves o (empty array)
-🗑️ Borrar una llave,"DEL ""IdempotencyKey:uuid""",(integer) 1 (Éxito) o 0 (No existe)
-🧹 Borrar TODO,FLUSHALL,OK
-📄 Ver contenido,"HGETALL ""IdempotencyKey:uuid""",Lista de campos y valores
-⚡ Monitorear en vivo,MONITOR,Flujo de comandos en tiempo real
+#### Acción: 
+🔍 Ver todas las llaves,
+#### Comando:
+keys *
+#### Respuesta Esperada:
+Lista de llaves o (empty array)
+
+#### Acción: 
+🗑️ Borrar una llave
+#### Comando:
+"DEL ""IdempotencyKey:uuid"""
+#### Respuesta Esperada:
+(integer) 1 (Éxito) o 0 (No existe)
+
+#### Acción: 
+🧹 Borrar TODO
+#### Comando:
+FLUSHALL
+#### Respuesta Esperada:
+OK
+
+#### Acción: 
+📄 Ver contenido
+#### Comando:
+"HGETALL ""IdempotencyKey:uuid"""
+#### Respuesta Esperada:
+Lista de campos y valores
+
+#### Acción: 
+⚡ Monitorear en vivo
+#### Comando:
+MONITOR
+#### Respuesta Esperada:
+Flujo de comandos en tiempo real
 
 ## 📦 2. Dependencias (pom.xml)Necesitamos el starter de Spring Data Redis para habilitar los Repositorios y la conexión con el servidor.
 
@@ -35,20 +63,20 @@ XML
 Es fundamental usar @RedisHash para definir el prefijo y el tiempo de vida (TTL) de la llave.
 
 Java
-
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@RedisHash(value = "IdempotencyKey", timeToLive = 86400) // 24 horas de persistencia
-public class IdempotencyEntry implements Serializable {
-    
-    @Id // Importar de org.springframework.data.annotation.Id
-    private String key;
-    
-    private String responseBody;
-    private int statusCode;
+{
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @RedisHash(value = "IdempotencyKey", timeToLive = 86400) // 24 horas de persistencia
+    public class IdempotencyEntry implements Serializable {
+        @Id // Importar de org.springframework.data.annotation.Id
+        private String key;
+        
+        private String responseBody;
+        private int statusCode;
+    }
 }
 
 ### IdempotencyRedisRepository.java
