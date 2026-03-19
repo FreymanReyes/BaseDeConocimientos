@@ -93,9 +93,9 @@ Extendemos de CrudRepository para manejar persistencia de forma automática.
 
 Java
 
-@Repository
-public interface IdempotencyRedisRepository extends CrudRepository<IdempotencyEntry, String> {
-}
+    @Repository
+    public interface IdempotencyRedisRepository extends CrudRepository<IdempotencyEntry, String> {
+    }
 
 ## 🧠 4. Flujo Lógico: Interceptor y Advice
 
