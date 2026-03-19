@@ -1,4 +1,6 @@
-# 🚀 Guía de Implementación: Idempotencia con Redis en Spring Boot 3.xEste documento detalla la arquitectura y configuración necesaria para evitar transacciones duplicadas en el microservicio de Bank Dugongo utilizando Redis como capa de caché de corta duración.
+# 🚀 Guía de Implementación: Idempotencia con Redis en Spring Boot 3.x
+
+Este documento detalla la arquitectura y configuración necesaria para evitar transacciones duplicadas en el microservicio de Bank Dugongo utilizando Redis como capa de caché de corta duración.
 
 ## 🛠️ 1. Infraestructura: Configuración con Docker
 
@@ -167,6 +169,7 @@ Misión: Capturar la respuesta exitosa del Controller y guardarla en Redis. Se a
 
 
 ## ⚙️ 5. Comunicación y Registro (WebConfig)
+
 Para que el Interceptor sea inyectado en el flujo de peticiones de Spring MVC:
 
 
@@ -186,14 +189,17 @@ Para que el Interceptor sea inyectado en el flujo de peticiones de Spring MVC:
 ## 🧪 6. Protocolo de Pruebas en 🟠 Postman 
 
 ### ❌ Escenario 1: Sin Header
+
 Acción: Enviar POST sin X-Idempotency-Key.
 Resultado: 400 Bad Request.
 
 ### ✅ Escenario 2: Primera Petición (Creación)
+
 Acción: Enviar POST con X-Idempotency-Key: tx-unique-001.
 Flujo: Interceptor (no encuentra) → Controller (procesa) → Advice (guarda en Redis) → Cliente recibe 201 Created.
 
 ### 🛡️ Escenario 3: Segunda Petición (Duplicada)
+
 Acción: Enviar mismo POST con misma llave tx-unique-001.
 Flujo: Interceptor (encuentra llave en Redis) → Devuelve JSON cacheado inmediatamente → El Controller NUNCA se ejecuta.
 
