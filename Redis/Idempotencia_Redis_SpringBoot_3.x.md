@@ -10,7 +10,8 @@ docker run --name redis-dugongo -p 6379:6379 -d redis:alpine
 
 ### Comandos Útiles de Administración (Redis-CLI)
 
-Acceso al contenedor: docker exec -it redis-dugongo redis-cli
+Acceso al contenedor: **docker exec -it redis-dugongo redis-cli**
+
 
 #### Acción: 
 🔍 Ver todas las llaves,
@@ -18,6 +19,7 @@ Acceso al contenedor: docker exec -it redis-dugongo redis-cli
 keys *
 #### Respuesta Esperada:
 Lista de llaves o (empty array)
+
 
 #### Acción: 
 🗑️ Borrar una llave
@@ -33,6 +35,7 @@ FLUSHALL
 #### Respuesta Esperada:
 OK
 
+
 #### Acción: 
 📄 Ver contenido
 #### Comando:
@@ -40,12 +43,14 @@ OK
 #### Respuesta Esperada:
 Lista de campos y valores
 
+
 #### Acción: 
 ⚡ Monitorear en vivo
 #### Comando:
 MONITOR
 #### Respuesta Esperada:
 Flujo de comandos en tiempo real
+
 
 ## 📦 2. Dependencias (pom.xml)Necesitamos el starter de Spring Data Redis para habilitar los Repositorios y la conexión con el servidor.
 
@@ -62,8 +67,6 @@ XML
 
 Es fundamental usar @RedisHash para definir el prefijo y el tiempo de vida (TTL) de la llave.
 
-Java
-{
     @Getter
     @Setter
     @Builder
@@ -77,7 +80,7 @@ Java
         private String responseBody;
         private int statusCode;
     }
-}
+
 
 ### IdempotencyRedisRepository.java
 
@@ -95,47 +98,46 @@ public interface IdempotencyRedisRepository extends CrudRepository<IdempotencyEn
 
 Misión: Revisar si la llave ya existe antes de que la petición llegue al Controller.
 
-Java
 
-@Component
-@RequiredArgsConstructor
-public class IdempotencyInterceptor implements HandlerInterceptor {
-    private final IdempotencyRedisRepository redisRepository;
 
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (!"POST".equalsIgnoreCase(request.getMethod())) return true;
+    @Component
+    @RequiredArgsConstructor
+    public class IdempotencyInterceptor implements HandlerInterceptor {
+        private final IdempotencyRedisRepository redisRepository;
+    
+        @Override
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+            if (!"POST".equalsIgnoreCase(request.getMethod())) return true;
+    
+            String key = request.getHeader("X-Idempotency-Key");
+            if (key == null || key.isBlank()) throw new ApiException(ErrorCode.INVALID_HEADER_IDEMPOTENCY);
+    
+            // BUSQUEDA EN REDIS
+            return redisRepository.findById(key).map(entry -> {
+                try {
+                    // SI EXISTE: Frenamos la ejecución y devolvemos la respuesta guardada
+                    response.setStatus(entry.getStatusCode());
+                    response.setContentType("application/json");
+                    response.getWriter().write(entry.getResponseBody());
+                    response.getWriter().flush();
+                    return false; 
+                } catch (Exception e) {
+                    return false;
+                }
+            }).orElse(true); // SI NO EXISTE: Permitimos el paso al Controller
+        }
 
-        String key = request.getHeader("X-Idempotency-Key");
-        if (key == null || key.isBlank()) throw new ApiException(ErrorCode.INVALID_HEADER_IDEMPOTENCY);
-
-        // BUSQUEDA EN REDIS
-        return redisRepository.findById(key).map(entry -> {
-            try {
-                // SI EXISTE: Frenamos la ejecución y devolvemos la respuesta guardada
-                response.setStatus(entry.getStatusCode());
-                response.setContentType("application/json");
-                response.getWriter().write(entry.getResponseBody());
-                response.getWriter().flush();
-                return false; 
-            } catch (Exception e) {
-                return false;
-            }
-        }).orElse(true); // SI NO EXISTE: Permitimos el paso al Controller
-    }
-}
 
 ### Paso B: El Advice (beforeBodyWrite) - "El Notario"
 
 Misión: Capturar la respuesta exitosa del Controller y guardarla en Redis. Se activa gracias a @RestControllerAdvice.
 
-Java
 
-@RestControllerAdvice 
-@RequiredArgsConstructor
-public class IdempotencyResponseAdvice implements ResponseBodyAdvice<Object> {
-    private final IdempotencyRedisRepository redisRepository;
-    private final ObjectMapper objectMapper;
+    @RestControllerAdvice 
+    @RequiredArgsConstructor
+    public class IdempotencyResponseAdvice implements ResponseBodyAdvice<Object> {
+        private final IdempotencyRedisRepository redisRepository;
+        private final ObjectMapper objectMapper;
 
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
@@ -162,24 +164,24 @@ public class IdempotencyResponseAdvice implements ResponseBodyAdvice<Object> {
         }
         return body;
     }
-}
+
 
 ## ⚙️ 5. Comunicación y Registro (WebConfig)
 Para que el Interceptor sea inyectado en el flujo de peticiones de Spring MVC:
 
-Java
 
-@Configuration
-@RequiredArgsConstructor
-public class WebConfig implements WebMvcConfigurer {
-    private final IdempotencyInterceptor idempotencyInterceptor;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(idempotencyInterceptor)
-                .addPathPatterns("/api/v1/transactions/**");
-    }
-}
+    @Configuration
+    @RequiredArgsConstructor
+    public class WebConfig implements WebMvcConfigurer {
+        private final IdempotencyInterceptor idempotencyInterceptor;
+
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(idempotencyInterceptor)
+                    .addPathPatterns("/api/v1/transactions/**");
+        }
+
 
 ## 🧪 6. Protocolo de Pruebas en 🟠 Postman 
 
