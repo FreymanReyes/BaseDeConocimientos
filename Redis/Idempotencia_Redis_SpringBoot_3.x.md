@@ -54,14 +54,17 @@ MONITOR
 Flujo de comandos en tiempo real
 
 
-## 📦 2. Dependencias (pom.xml)Necesitamos el starter de Spring Data Redis para habilitar los Repositorios y la conexión con el servidor.
+## 📦 2. Dependencias (pom.xml)
+
+Necesitamos el starter de Spring Data Redis para habilitar los Repositorios y la conexión con el servidor.
 
 XML
 
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
-</dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+
 
 ## 💾 3. Capa de Datos: La Entidad y el Repositorio
 
